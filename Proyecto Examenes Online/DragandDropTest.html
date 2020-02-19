@@ -1,0 +1,339 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /><title>Documento sin título</title>
+
+</head>
+<body>
+<div id="dragdrop" style="-webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;">
+<form id="dragdrop_form">
+<table border="0" width="1200">
+<tbody>
+<tr valign="top">
+<td>
+<table border="0" width="640">
+<tbody>
+<tr>
+<td>Nombre</td>
+<td colspan="4"><input name="txt_nombrepregunta" id="txt_nombrepregunta" type="text" /></td>
+</tr>
+<tr>
+<td width="115">Enunciado</td>
+<td colspan="4"><label for="txt_enunciado"></label>
+<input name="txt_enunciado" id="txt_enunciado" style="width: 100%;" type="text" /></td>
+</tr>
+<tr>
+<td>Imagen de Fondo</td>
+<td colspan="4"><input accept="image/*" onchange="openFile(event,0)" type="file" /></td>
+</tr>
+<tr>
+<td colspan="5"><img id="img_imagenfondo" draggable="false" onload="ResizeImage(this,0)" /></td>
+</tr>
+</tbody>
+</table>
+</td>
+<td>
+<table id="tbl_etiquetas" style="display: none;" width="784">
+<tbody>
+<tr>
+<td colspan="7">Etiquetas</td>
+</tr>
+<tr>
+<td colspan="7">
+<hr /></td>
+</tr>
+<tr>
+<td id="td_1_arrastrable" valign="top" width="150">
+<div id="div_1_arrastrable"> 
+	<img id="img_1_arrastrable" draggable="false" onload="ResizeImage(this,1)" style="display: none; position: absolute; border-style:solid; border-color:white;" border="3"/>
+	<label id="lbl_1_arrastrable" style="border: medium double ; background-color: white; position: absolute;">Texto</label>
+</div>
+</td>
+<td width="150">Tipo<br />
+<input name="rdb_1_tipo" id="rdb_1_tipo_txt" value="txt" checked="true" onchange="CambiarTipo(1);" type="radio" />Texto<br />
+<input name="rdb_1_tipo" id="rdb_1_tipo_img" value="img" onchange="CambiarTipo(1);" type="radio" />Imágen </td>
+<td width="100">Grupo<br />
+<select name="lst_1_grupo" id="lst_1_grupo" onchange="CambiarGrupo(this.value,1);"><option>Ninguno</option><option style="background-color: rgb(255, 51, 51);">1</option><option style="background-color: rgb(51, 133, 255);">2</option><option style="background-color: rgb(51, 255, 51);">3</option><option style="background-color: rgb(255, 133, 51);">4</option><option style="background-color: rgb(255, 51, 255);">5</option><option style="background-color: rgb(255, 255, 51);">6</option></select>
+</td>
+<td width="204"><label>Nombre</label><br />
+<input id="txt_1_nombre" value="Texto" onchange="RellenarArrastrable(this,1);" type="text" />
+<input id="fle_1_nombre" accept="image/*" onchange="openFile(event,1)" style="display: none;" type="file" /> </td>
+<td width="80">Distractor<br />
+<input id="chk_1_distractor" onclick="Distractor(this,1);" type="checkbox" /></td>
+<td id="td_1_ubicacion" width="93">Ubicación<br />
+<label>x</label> <input id="nbr_1_x" size="4" value="-1" style="width: 50px;" onclick="this.select();" onchange="ChangePosition(this,1);" type="number" /><br />
+<label>y</label> <input id="nbr_1_y" size="4" value="-1" style="width: 50px;" onclick="this.select();" onchange="ChangePosition(this,1);" type="number" /></td>
+<td></td>
+</tr>
+<tr>
+<td colspan="7" align="center"><input id="btn_nuevaetiqueta" value="Añadir Etiqueta" onclick="NuevaEtiqueta();" type="button" /></td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+</tbody>
+</table>
+</form>
+</div>
+<script>
+//--CARGAR IMAGEN DE FONDO
+var imagenfondo_x=0;
+var imagenfondo_y=0;
+var imagenfondo_w=0;
+var imagenfondo_h=0;
+var etiquetas=1; //--numero de filas de etiquetas
+var numeros=1; //--cantidad de etiquetas activas (no borrradas)
+var openFile = function(event, etiqueta) {
+var input = event.target;
+var reader = new FileReader();
+reader.onload = function(){
+var dataURL = reader.result;
+if (etiqueta==0)
+var output = document.getElementById("img_imagenfondo");
+else
+var output = document.getElementById("img_"+etiqueta+"_arrastrable");
+output.src = dataURL;
+if (etiqueta==0) { //---0 para el fondo, demas numeros para las filas de etiquetas
+//--Getting Coordenates
+var rect=output.getBoundingClientRect();
+imagenfondo_x=rect.left+window.scrollX;
+imagenfondo_y=rect.top+window.scrollY;
+document.getElementById("tbl_etiquetas").style.display="block";
+}
+};
+reader.readAsDataURL(input.files[0]);
+};
+function ResizeImage(output,etiqueta) {
+var ancho=640;
+var alto=480;
+if (etiqueta>=1) {
+ancho=90;//150;
+alto=60;//100;
+}
+if (output.naturalWidth>ancho) output.width=ancho;
+else output.width=output.naturalWidth;
+if (etiqueta==0) imagenfondo_w=imagenfondo_x+output.width;
+if (output.naturalHeight>alto) output.height=alto;
+else output.height=output.naturalHeight;
+if (etiqueta==0) imagenfondo_h=imagenfondo_y+output.height;
+//--Restaurar posicion de todas las etiquetas
+if (etiqueta==0) {
+for (var i=1; i<=etiquetas; i++) {
+var arrastrable=document.getElementById("lbl_"+i+"_arrastrable");
+var arrastrable_img=document.getElementById("img_"+i+"_arrastrable")
+if (arrastrable!=null || arrastrable_img!=null) {
+ResetPosition(arrastrable, i);
+ResetPosition(arrastrable_img, i);
+}
+}
+}
+}
+//--ARRASTAR ELEMENTO
+//--Inicializar primera etiqueta arrastrable
+dragElement(document.getElementById("lbl_1_arrastrable"), 1);
+dragElement(document.getElementById("img_1_arrastrable"), 1);
+function dragElement(elmnt, etiqueta) { var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+elmnt.onmousedown = dragMouseDown;
+function dragMouseDown(e) {
+e = e || window.event;
+// get the mouse cursor position at startup:
+pos3 = e.clientX;
+pos4 = e.clientY;
+document.onmouseup = closeDragElement;
+// call a function whenever the cursor moves:
+document.onmousemove = elementDrag;
+}
+function elementDrag(e) {
+e = e || window.event;
+// calculate the new cursor position:
+pos1 = pos3 - e.clientX;
+pos2 = pos4 - e.clientY;
+pos3 = e.clientX;
+pos4 = e.clientY;
+// set the element's new position:
+elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+}
+function closeDragElement() {
+/* stop moving when mouse button is released:*/
+document.onmouseup = null;
+document.onmousemove = null;
+rect=elmnt.getBoundingClientRect();
+var x=parseInt(rect.left+window.scrollX);
+var y=parseInt(rect.top+window.scrollY);
+//--If Outside Reset Position
+if (x<imagenfondo_x || x>imagenfondo_w
+|| y<imagenfondo_y || y>imagenfondo_h) {
+ResetPosition(elmnt, etiqueta);
+document.getElementById("nbr_"+etiqueta+"_x").value=-1;
+document.getElementById("nbr_"+etiqueta+"_y").value=-1;
+}
+else {
+document.getElementById("nbr_"+etiqueta+"_x").value=x-imagenfondo_x;
+document.getElementById("nbr_"+etiqueta+"_y").value=y-imagenfondo_y;
+}
+}
+}
+function ResetPosition(elmnt, etiqueta) {
+//--Getting Draggable Original Position
+var arrastrable_div=document.getElementById("div_"+etiqueta+"_arrastrable");
+var rect=arrastrable_div.getBoundingClientRect();
+var img_original_x=rect.left+window.scrollX;
+var img_original_y=rect.top+window.scrollY;
+elmnt.style.left = img_original_x + "px";
+elmnt.style.top = img_original_y + "px";
+document.getElementById("nbr_"+etiqueta+"_x").value=-1;
+document.getElementById("nbr_"+etiqueta+"_y").value=-1;
+}
+function RellenarArrastrable(elmnt, etiqueta) {
+var arrastrable=document.getElementById("lbl_"+etiqueta+"_arrastrable");
+arrastrable.innerHTML=elmnt.value;
+}
+function ChangePosition(elmnt, etiqueta) {
+var x=parseInt(document.getElementById("nbr_"+etiqueta+"_x").value);
+var y=parseInt(document.getElementById("nbr_"+etiqueta+"_y").value);
+var arrastrable=document.getElementById("lbl_"+etiqueta+"_arrastrable");
+var arrastrable_img=document.getElementById("img_"+etiqueta+"_arrastrable");
+//--If Outside Reset Position
+if (x<0 && y>=0) {
+x=0;
+document.getElementById("nbr_"+etiqueta+"_x").value=0;
+}
+else if (x>=0 && y<0){
+y=0;
+document.getElementById("nbr_"+etiqueta+"_y").value=0;
+}
+if (x<0 || x>imagenfondo_w-imagenfondo_x
+|| y<0 || y>imagenfondo_h-imagenfondo_y) {
+ResetPosition(arrastrable, etiqueta);
+ResetPosition(arrastrable_img, etiqueta);
+}
+else {
+arrastrable.style.left=(imagenfondo_x+x)+"px";
+arrastrable.style.top=(imagenfondo_y+y)+"px";
+arrastrable_img.style.left=(imagenfondo_x+x)+"px";
+arrastrable_img.style.top=(imagenfondo_y+y)+"px";
+}
+}
+function Distractor(elmnt, etiqueta) {
+var arrastrable=document.getElementById("lbl_"+etiqueta+"_arrastrable");
+var arrastrable_img=document.getElementById("img_"+etiqueta+"_arrastrable");
+if (elmnt.checked==true) {
+document.getElementById("td_"+etiqueta+"_ubicacion").style.visibility="hidden";
+document.getElementById("td_"+etiqueta+"_arrastrable").style.visibility="hidden";
+ResetPosition(arrastrable, etiqueta);
+ResetPosition(arrastrable_img, etiqueta);
+}
+else {
+document.getElementById("td_"+etiqueta+"_ubicacion").style.visibility="visible";
+document.getElementById("td_"+etiqueta+"_arrastrable").style.visibility="visible";
+}
+}
+function CambiarTipo(etiqueta) {
+var arrastrable=document.getElementById("lbl_"+etiqueta+"_arrastrable");
+var arrastrable_img=document.getElementById("img_"+etiqueta+"_arrastrable");
+if (document.getElementById("rdb_"+etiqueta+"_tipo_txt").checked==true) {
+//--Tipo Texto
+document.getElementById("txt_"+etiqueta+"_nombre").style.display="block";
+document.getElementById("lbl_"+etiqueta+"_arrastrable").style.display="block";
+document.getElementById("fle_"+etiqueta+"_nombre").style.display="none";
+document.getElementById("img_"+etiqueta+"_arrastrable").style.display="none";
+}
+else {
+//--Tipo Imagen
+document.getElementById("txt_"+etiqueta+"_nombre").style.display="none";
+document.getElementById("lbl_"+etiqueta+"_arrastrable").style.display="none";
+document.getElementById("fle_"+etiqueta+"_nombre").style.display="block";
+document.getElementById("img_"+etiqueta+"_arrastrable").style.display="block";
+}
+ResetPosition(arrastrable, etiqueta);
+ResetPosition(arrastrable_img, etiqueta);
+}
+function NuevaEtiqueta() {
+var tabla=document.getElementById("tbl_etiquetas");
+var filas=tabla.rows.length;
+var fila=tabla.insertRow(filas-1)
+etiquetas+=1; //--variable global con el total de filas
+numeros+=1; //--variable global con el total de filas activas
+var i=etiquetas; //--nuevo índice de fila
+fila.innerHTML+="\
+<td width='150' valign='top' id='td_"+i+"_arrastrable'>\
+<div id='div_"+i+"_arrastrable'>\
+<img id='img_"+i+"_arrastrable' draggable='false' onload='ResizeImage(this,"+i+")' style='display:none; position: absolute; border-style:solid; border-color:white;' />\
+<label id='lbl_"+i+"_arrastrable' style='background-color: white; border: double; position: absolute;'>Texto</label>\
+</div>\
+</td>\
+<td width='150'>Tipo<br />\
+<input name=id='rdb_"+i+"_tipo' id='rdb_"+i+"_tipo_txt' value='txt' checked='true' type='radio' onchange='CambiarTipo("+i+");'/>Texto<br/>\
+<input name=id='rdb_"+i+"_tipo' id='rdb_1_tipo_img' value='img' type='radio' onchange='CambiarTipo("+i+");'/>Imágen\
+</td>\
+<td width='100'>Grupo<br />\
+<select name='lst_"+i+"_grupo' id='lst_"+i+"_grupo' onchange='CambiarGrupo(this.value,"+i+");'><option>Ninguno</option><option style='background-color: rgb(255, 51, 51);'>1</option><option style='background-color: rgb(51, 133, 255);'>2</option><option style='background-color: rgb(51, 255, 51);'>3</option><option style='background-color: rgb(255, 133, 51);'>4</option><option style='background-color: rgb(255, 51, 255);'>5</option><option style='background-color: rgb(255, 255, 51);'>6</option></select>\
+</td>\
+<td width='204'><label>Nombre</label><br />\
+<input id='txt_"+i+"_nombre' type='text' value='Texto' onchange='RellenarArrastrable(this,"+i+");'/>\
+<input id='fle_"+i+"_nombre' accept='image/*' onchange='openFile(event,"+i+")' type='file' style='display:none;'/>\
+</td>\
+<td width='80'>Distractor<br />\
+<input id='chk_"+i+"_distractor' type='checkbox' onclick='Distractor(this,"+i+");'/></td>\
+<td width='93' id='td_"+i+"_ubicacion'>Ubicación<br />\
+<label>x</label>\
+<input type='number' id='nbr_"+i+"_x' size='4' value='-1' style='width:50px' onclick='this.select();' onchange='ChangePosition(this,"+i+");' /><br/>\
+<label>y</label>\
+<input type='number' id='nbr_"+i+"_y' size='4' value='-1' style='width:50px' onclick='this.select();' onchange='ChangePosition(this,"+i+");'/></td>\
+<td><input id='btn_"+i+"_borraretiqueta' value='X' onclick='BorrarEtiqueta(this);' type='button' /></td>\
+"
+dragElement(document.getElementById("lbl_"+i+"_arrastrable"), i);
+dragElement(document.getElementById("img_"+i+"_arrastrable"), i);
+}
+function BorrarEtiqueta(boton) {
+var tabla=document.getElementById("tbl_etiquetas");
+var filas=tabla.rows.length;
+var indice=boton.parentNode.parentNode.rowIndex;
+tabla.deleteRow(indice);
+ResizeImage(document.getElementById("img_"+etiqueta+"_arrastrable"),etiqueta);
+}
+function CambiarGrupo(grupo, etiqueta) {
+	var lista=document.getElementById("lst_"+etiqueta+"_grupo");
+	var arrastrable=document.getElementById("lbl_"+etiqueta+"_arrastrable");
+	var img_arrastrable=document.getElementById("img_"+etiqueta+"_arrastrable");
+
+	var color="#ffffff";
+
+	switch(parseInt(grupo)) {
+		case 1: {
+			color="#ff3333"; //--rojo
+			break;
+		}
+		case 2: {
+			color="#3385ff"; //--azul
+			break;
+		}
+		case 3: {
+			color="#33ff33"; //--verde
+			break;
+		}
+		case 4: {
+			color="#ff8533"; //--naranja
+			break;
+		}
+		case 5: {
+			color="#ff33ff"; //--purpura
+			break;
+		}
+		case 6: {
+			color="#ffff33"; //--amarillo
+			break;
+		}
+		default: {
+			color="#ffffff";
+			break;
+		}
+	}
+
+	lista.style.backgroundColor=color;
+	arrastrable.style.backgroundColor=color;
+	img_arrastrable.style.borderColor=color;
+}
+</script>
+</body></html>
